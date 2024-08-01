@@ -88,7 +88,7 @@ const onSubmit = async (): Promise<void> => {
     hrName: hrName.value,
     contactTelegram: contactTelegram.value,
     contactPhone: contactPhone.value,
-    craetedAt: new Date(),
+    createdAt: new Date(),
   }
 
   const userId = await getAuth().currentUser?.uid;

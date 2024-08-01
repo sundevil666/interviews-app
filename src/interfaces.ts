@@ -5,5 +5,12 @@ export interface IInterview {
   hrName: string
   contactTelegram: string
   contactPhone: string
-  craetedAt: Date
+  createdAt: Date
+}
+
+export interface IColumnName {
+  name: string
+  label: string
+  field: string
+  align?: 'left' | 'right' | 'center'
 }

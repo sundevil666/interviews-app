@@ -1,147 +1,136 @@
 <template>
   <q-page class="q-pa-md InterviewsPage">
-    <q-table
-      :rows="rows"
-      row-key="name"
-      flat bordered
-    />
+    <div v-if="interviews.length === 0" class="text-h6">
+      Interviews list is empty. Please <router-link :to="{name: 'AddInterview'}">add</router-link> new one
+    </div>
+    <div v-else>
+      <q-table
+        :rows="interviews"
+        :columns="columns"
+        row-key="name"
+        flat bordered
+      >
+        <template v-slot:body="props">
+          <q-tr :props="props">
+            <q-td :key="item.name" :props="props" v-for="item in columns">
+              <a
+                v-if="item.name === 'vacancyLink'"
+                :href="`https://${props.row[item.name]}`"
+                target="_blank"
+              >
+                {{props.row[item.name]}}
+              </a>
+
+              <router-link
+                v-else-if="item.name === 'edit'"
+                :to="`/interview/${props.row.id}`"
+              >
+                {{item.label}}
+              </router-link>
+
+              <q-btn
+                v-else-if="item.name === 'remove'"
+                :label="item.label"
+                color="red"
+                @click="removeInterview(props.row.id)"
+              />
+
+              <span v-else>{{props.row[item.name]}}</span>
+            </q-td>
+          </q-tr>
+        </template>
+      </q-table>
+    </div>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { ref, onBeforeMount } from 'vue';
+import { Notify } from 'quasar';
 import { getFirestore, collection, query, orderBy, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { useUserStore } from 'stores/user';
-import type { IInterview } from 'src/interfaces';
+import type { IInterview, IColumnName } from 'src/interfaces';
 
 defineOptions({
   name: 'InterviewsPage'
 });
 const userStore = useUserStore();
 const { userId } = userStore;
-console.log(userId);
 
 const db = getFirestore();
 const interviews = ref<IInterview[]>([])
 const isLoading = ref<boolean>(true)
 
-const rows = ref([
+const columns: Array<IColumnName> = ([
   {
-    name: 'Frozen Yogurt',
-    calories: 159,
-    fat: 6.0,
-    carbs: 24,
-    protein: 4.0,
-    sodium: 87,
-    calcium: '14%',
-    iron: '1%'
+    name: 'companyName',
+    label: 'Company Name',
+    field: 'companyName',
   },
   {
-    name: 'Ice cream sandwich',
-    calories: 237,
-    fat: 9.0,
-    carbs: 37,
-    protein: 4.3,
-    sodium: 129,
-    calcium: '8%',
-    iron: '1%'
+    name: 'contactPhone',
+    label: 'Contact phone',
+    field: 'contactPhone',
   },
   {
-    name: 'Eclair',
-    calories: 262,
-    fat: 16.0,
-    carbs: 23,
-    protein: 6.0,
-    sodium: 337,
-    calcium: '6%',
-    iron: '7%'
+    name: 'contactTelegram',
+    label: 'Contact telegram',
+    field: 'contactTelegram',
   },
   {
-    name: 'Cupcake',
-    calories: 305,
-    fat: 3.7,
-    carbs: 67,
-    protein: 4.3,
-    sodium: 413,
-    calcium: '3%',
-    iron: '8%'
+    name: 'hrName',
+    label: 'HR name',
+    field: 'hrName',
   },
   {
-    name: 'Gingerbread',
-    calories: 356,
-    fat: 16.0,
-    carbs: 49,
-    protein: 3.9,
-    sodium: 327,
-    calcium: '7%',
-    iron: '16%'
+    name: 'vacancyLink',
+    label: 'Vacancy link',
+    field: 'vacancyLink',
   },
   {
-    name: 'Jelly bean',
-    calories: 375,
-    fat: 0.0,
-    carbs: 94,
-    protein: 0.0,
-    sodium: 50,
-    calcium: '0%',
-    iron: '0%'
+    name: 'createdAt',
+    label: 'Created at',
+    field: 'createdAt',
+    align: 'left',
   },
   {
-    name: 'Lollipop',
-    calories: 392,
-    fat: 0.2,
-    carbs: 98,
-    protein: 0,
-    sodium: 38,
-    calcium: '0%',
-    iron: '2%'
+    name: 'edit',
+    label: 'Edit',
+    align: 'left',
   },
   {
-    name: 'Honeycomb',
-    calories: 408,
-    fat: 3.2,
-    carbs: 87,
-    protein: 6.5,
-    sodium: 562,
-    calcium: '0%',
-    iron: '45%'
+    name: 'remove',
+    label: 'Remove',
+    align: 'left',
   },
-  {
-    name: 'Donut',
-    calories: 452,
-    fat: 25.0,
-    carbs: 51,
-    protein: 4.9,
-    sodium: 326,
-    calcium: '2%',
-    iron: '22%'
-  },
-  {
-    name: 'KitKat',
-    calories: 518,
-    fat: 26.0,
-    carbs: 65,
-    protein: 7,
-    sodium: 54,
-    calcium: '12%',
-    iron: '6%'
-  }
-]);
+] as IColumnName[]);
 
 const getAllInterviews = async <T extends IInterview>(): Promise<T[]> => {
   const q = query(
     collection(db, `user/${userId}/interviews`),
-    orderBy('craetedAt', 'desc'));
+    orderBy('createdAt', 'desc'));
 
   const listDocs = await getDocs(q);
-
-  console.log('listDocs', listDocs);
 
   return listDocs.docs.map(doc => doc.data() as T)
 }
 
+const removeInterview = async (id: string): Promise<void> => {
+  const prompt = window.confirm('Are you sure?');
+  if(prompt) {
+    await deleteDoc(doc(db, `user/${userId}/interviews`, id))
+    const listInterviews: Array<IInterview> = await getAllInterviews();
+    interviews.value = [...listInterviews];
+    Notify.create({
+      message: 'Interview removed',
+    })
+  }
+
+}
+
 onBeforeMount(async () => {
-  await getAllInterviews();
+  const listInterviews: Array<IInterview> = await getAllInterviews();
+  interviews.value = [...listInterviews];
   isLoading.value = false
 })
 </script>
