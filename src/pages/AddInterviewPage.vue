@@ -1,9 +1,7 @@
 <template>
   <q-page class="q-pa-md AddInterviewPage flex justify-center">
     <div class="q-pa-md full-width" style="max-width: 600px">
-      <q-form
-        class="q-gutter-md"
-      >
+      <q-form class="q-gutter-md">
         <q-input
           filled
           v-model="companyName"
@@ -101,9 +99,6 @@ const onSubmit = async (): Promise<void> => {
     contactPhone.value = ''
     isLoading.value = false
   }
-
-
-  console.log(payload);
 }
 
 </script>
