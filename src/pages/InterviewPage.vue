@@ -224,7 +224,7 @@ const addStage = (): void => {
     if(!interview.value.stages) {
       interview.value.stages = [];
     }
-    const data: IStage = {name: '', date: '', description: ''}
+    const data: IStage = {name: '', date: null, description: ''}
     interview.value.stages.push(data)
   }
 }

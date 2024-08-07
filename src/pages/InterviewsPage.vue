@@ -88,10 +88,16 @@ const columns: Array<IColumnName> = ([
     field: 'vacancyLink',
   },
   {
-    name: 'createdAt',
-    label: 'Created at',
-    field: 'createdAt',
-    align: 'left',
+    name: 'salaryRange',
+    label: 'Salary Range',
+    field: 'salaryRange',
+    align: 'left'
+  },
+  {
+    name: 'offerStatusText',
+    label: 'Offer',
+    field: 'offerStatusText',
+    align: 'left'
   },
   {
     name: 'edit',
@@ -112,7 +118,19 @@ const getAllInterviews = async <T extends IInterview>(): Promise<T[]> => {
 
   const listDocs = await getDocs(q);
 
-  return listDocs.docs.map(doc => doc.data() as T)
+  const list = listDocs.docs.map(doc => doc.data() as T)
+
+  list.forEach((interview: IInterview) => {
+    if(interview.salaryFrom && interview.salaryTo) {
+      interview.salaryRange = `${interview.salaryFrom} - ${interview.salaryTo}`
+    } else {
+      interview.salaryRange = '0 - 0'
+    }
+
+    interview.offerStatusText = interview.offerStatus === undefined ? 'Waiting' : interview.offerStatus ? 'Accepted' : 'Declined';
+  })
+
+  return list
 }
 
 const removeInterview = async (id: string): Promise<void> => {
@@ -120,7 +138,8 @@ const removeInterview = async (id: string): Promise<void> => {
   if(prompt) {
     await deleteDoc(doc(db, `user/${userId}/interviews`, id))
     const listInterviews: Array<IInterview> = await getAllInterviews();
-    interviews.value = [...listInterviews];
+    interviews.value = [...listInterviews]
+
     Notify.create({
       message: 'Interview removed',
     })
@@ -131,6 +150,7 @@ const removeInterview = async (id: string): Promise<void> => {
 onBeforeMount(async () => {
   const listInterviews: Array<IInterview> = await getAllInterviews();
   interviews.value = [...listInterviews];
+
   isLoading.value = false
 })
 </script>
