@@ -19,17 +19,12 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
+    redirect: { name: 'Statistics' },
     children: [
       {
         path: 'auth',
         name: 'Auth',
         component: () => import('pages/AuthPage.vue'),
-      },
-      {
-        path: 'home',
-        name: 'Home',
-        component: () => import('pages/IndexPage.vue'),
-        beforeEnter: checkAuth,
       },
       {
         path: 'add-interview',

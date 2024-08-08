@@ -95,9 +95,10 @@
 <script setup lang="ts">
 import { ref, onBeforeMount, watch } from 'vue';
 import { Notify } from 'quasar';
-import { getFirestore, collection, query, orderBy, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { getFirestore, deleteDoc, doc } from 'firebase/firestore';
 import { useUserStore } from 'stores/user';
-import type { IInterview, IColumnName, IOfferFilter } from 'src/interfaces';
+import type { IColumnName } from 'src/interfaces';
+import { useInterviews } from 'src/api/useInterviews';
 
 defineOptions({
   name: 'InterviewsPage'
@@ -105,10 +106,10 @@ defineOptions({
 const userStore = useUserStore();
 const { userId } = userStore;
 
+const { interviews, isLoading, fetchInterviews } = useInterviews();
+
 const db = getFirestore();
-const interviews = ref<IInterview[]>([])
-const isLoading = ref<boolean>(true)
-const offerFilter = ref<IOfferFilter>('All');
+const offerFilter = ref<string>('All');
 
 const columns: Array<IColumnName> = ([
   {
@@ -160,34 +161,12 @@ const columns: Array<IColumnName> = ([
   },
 ] as IColumnName[]);
 
-const getAllInterviews = async <T extends IInterview>(): Promise<T[]> => {
-  const q = query(
-    collection(db, `user/${userId}/interviews`),
-    orderBy('createdAt', 'desc'));
-
-  const listDocs = await getDocs(q);
-
-  const list = listDocs.docs.map(doc => doc.data() as T)
-
-  list.forEach((interview: IInterview) => {
-    if(interview.salaryFrom && interview.salaryTo) {
-      interview.salaryRange = `${interview.salaryFrom} - ${interview.salaryTo}`
-    } else {
-      interview.salaryRange = '0 - 0'
-    }
-
-    interview.offerStatusText = interview.offerStatus === undefined ? 'Waiting' : interview.offerStatus ? 'Accepted' : 'Declined';
-  })
-
-  return list
-}
 
 const removeInterview = async (id: string): Promise<void> => {
   const prompt = window.confirm('Are you sure?');
   if(prompt) {
     await deleteDoc(doc(db, `user/${userId}/interviews`, id))
-    const listInterviews: Array<IInterview> = await getAllInterviews();
-    interviews.value = [...listInterviews]
+    await fetchInterviews();
 
     Notify.create({
       message: 'Interview removed',
@@ -196,8 +175,7 @@ const removeInterview = async (id: string): Promise<void> => {
 }
 
 watch(offerFilter, async () => {
-  const listInterviews: Array<IInterview> = await getAllInterviews();
-  interviews.value = [...listInterviews]
+  await fetchInterviews();
 
   interviews.value = interviews.value .filter(item => {
     if(offerFilter.value === 'All') {
@@ -209,8 +187,7 @@ watch(offerFilter, async () => {
 })
 
 onBeforeMount(async () => {
-  const listInterviews: Array<IInterview> = await getAllInterviews();
-  interviews.value = [...listInterviews];
+  await fetchInterviews();
 
   isLoading.value = false
 })

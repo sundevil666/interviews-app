@@ -75,17 +75,17 @@ const userStore = useUserStore();
 
 const menuList: IEssentialLinkProps[] = [
   {
-    title: 'Добавить',
+    title: 'Add',
     link: 'AddInterview',
     icon: 'add',
   },
   {
-    title: 'Лист собеседований',
+    title: 'List interviews',
     link: 'ListInterviews',
     icon: 'list',
   },
   {
-    title: 'Статистика',
+    title: 'Statistics',
     link: 'Statistics',
     icon: 'public',
   }

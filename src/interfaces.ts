@@ -27,4 +27,9 @@ export interface IStage {
   description?: string
 }
 
-export type IOfferFilter = 'Accepted' | 'Declined' | 'Waiting' | 'All';
+export type IOfferFilter = 'Accepted' | 'Declined' | 'Waiting';
+
+export interface IStatusCount {
+  status: IOfferFilter
+  count: number
+}
