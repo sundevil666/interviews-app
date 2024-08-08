@@ -4,6 +4,35 @@
       Interviews list is empty. Please <router-link :to="{name: 'AddInterview'}">add</router-link> new one
     </div>
     <div v-else>
+      <div class="flex items-center q-mb-md">
+        <div class="q-mr-md">Filler:</div>
+        <q-radio
+          v-model="offerFilter"
+          val="All"
+          label="All"
+          class="q-mr-md"
+        />
+        <q-radio
+          v-model="offerFilter"
+          val="Accepted"
+          label="Accepted"
+          color="green"
+          class="q-mr-md"
+        />
+        <q-radio
+          v-model="offerFilter"
+          val="Declined"
+          label="Declined"
+          color="red"
+          class="q-mr-md"
+        />
+        <q-radio
+          v-model="offerFilter"
+          val="Waiting"
+          label="Waiting"
+          color="blue"
+        />
+      </div>
       <q-table
         :rows="interviews"
         :columns="columns"
@@ -35,6 +64,25 @@
                 @click="removeInterview(props.row.id)"
               />
 
+              <q-badge
+                v-else-if="item.name === 'offerStatusText' && props.row[item.name] === 'Accepted'"
+                :label="props.row[item.name]"
+                color="green"
+                text-color="white"
+              />
+              <q-badge
+                v-else-if="item.name === 'offerStatusText' && props.row[item.name] === 'Declined'"
+                :label="props.row[item.name]"
+                color="red"
+                text-color="white"
+              />
+              <q-badge
+                v-else-if="item.name === 'offerStatusText' && props.row[item.name] === 'Waiting'"
+                :label="props.row[item.name]"
+                color="blue"
+                text-color="white"
+              />
+
               <span v-else>{{props.row[item.name]}}</span>
             </q-td>
           </q-tr>
@@ -45,11 +93,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onBeforeMount } from 'vue';
+import { ref, onBeforeMount, watch } from 'vue';
 import { Notify } from 'quasar';
 import { getFirestore, collection, query, orderBy, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { useUserStore } from 'stores/user';
-import type { IInterview, IColumnName } from 'src/interfaces';
+import type { IInterview, IColumnName, IOfferFilter } from 'src/interfaces';
 
 defineOptions({
   name: 'InterviewsPage'
@@ -60,6 +108,7 @@ const { userId } = userStore;
 const db = getFirestore();
 const interviews = ref<IInterview[]>([])
 const isLoading = ref<boolean>(true)
+const offerFilter = ref<IOfferFilter>('All');
 
 const columns: Array<IColumnName> = ([
   {
@@ -144,8 +193,20 @@ const removeInterview = async (id: string): Promise<void> => {
       message: 'Interview removed',
     })
   }
-
 }
+
+watch(offerFilter, async () => {
+  const listInterviews: Array<IInterview> = await getAllInterviews();
+  interviews.value = [...listInterviews]
+
+  interviews.value = interviews.value .filter(item => {
+    if(offerFilter.value === 'All') {
+      return item
+    } else {
+     return  item.offerStatusText === offerFilter.value
+    }
+  });
+})
 
 onBeforeMount(async () => {
   const listInterviews: Array<IInterview> = await getAllInterviews();

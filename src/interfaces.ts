@@ -26,3 +26,5 @@ export interface IStage {
   date: string | null
   description?: string
 }
+
+export type IOfferFilter = 'Accepted' | 'Declined' | 'Waiting' | 'All';
